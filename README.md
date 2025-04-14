@@ -2,6 +2,12 @@
 
 A Windows desktop application for transcribing audio files using OpenAI's Whisper model.
 
+## Demo
+
+[![Whisper Transcriber Demo](https://img.youtube.com/)](https://youtu.be/m1tojh6djIQ)
+
+*Click the image above to watch the demo video*
+
 ## Features
 - Transcribe audio files (mp3, wav, m4a, flac, ogg) to text
 - Multiple Whisper model options (tiny, base, small, medium, large)
