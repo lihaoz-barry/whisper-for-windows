@@ -95,9 +95,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# VS Code
-.vscode/
-
 # PyCharm
 .idea/
 
@@ -114,3 +111,11 @@ release/
 # Python bytecode files  
 __pycache__/  
 *.py[cod]
+
+# Include these specific files  
+!.vscode/launch.json  
+!.vscode/tasks.json  
+!.vscode/extensions.json  
+
+# Exclude everything else in .vscode  
+.vscode/*

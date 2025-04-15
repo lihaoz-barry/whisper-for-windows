@@ -15,9 +15,49 @@ import threading
 import sys
 import json
 from datetime import timedelta
+import configparser
 
 # Filter out specific Whisper warnings about Triton kernels
 warnings.filterwarnings("ignore", message="Failed to launch Triton kernels")
+
+# App settings
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".whisper_transcriber_settings.ini")
+
+def save_settings(settings_dict):
+    """Save application settings to config file"""
+    config = configparser.ConfigParser()
+    config['Settings'] = settings_dict
+    
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            config.write(f)
+        return True
+    except Exception as e:
+        print(f"Error saving settings: {e}")
+        return False
+
+def load_settings():
+    """Load application settings from config file"""
+    default_settings = {
+        'use_gpu': 'True' if torch.cuda.is_available() else 'False'
+    }
+    
+    if not os.path.exists(CONFIG_FILE):
+        return default_settings
+    
+    config = configparser.ConfigParser()
+    try:
+        config.read(CONFIG_FILE)
+        settings = dict(config['Settings']) if 'Settings' in config else {}
+        
+        # Validate settings
+        if 'use_gpu' not in settings:
+            settings['use_gpu'] = default_settings['use_gpu']
+            
+        return settings
+    except Exception as e:
+        print(f"Error loading settings: {e}")
+        return default_settings
 
 # Dictionary of transcription format options
 TRANSCRIPTION_FORMATS = {
@@ -144,11 +184,21 @@ class TranscriptionWorker(QThread):
     finished = pyqtSignal(object)  # Changed to return the complete result object
     error = pyqtSignal(str)
 
-    def __init__(self, model_name, audio_file, show_terminal_progress=True):
+    def __init__(self, model_name, audio_file, use_gpu=None, show_terminal_progress=True):
         super().__init__()
         self.model_name = model_name
         self.audio_file = audio_file
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        # Determine device to use based on user preference and availability
+        self.use_gpu = use_gpu if use_gpu is not None else torch.cuda.is_available()
+        self.gpu_available = torch.cuda.is_available()
+        
+        # Only use GPU if both requested and available
+        if self.use_gpu and self.gpu_available:
+            self.device = "cuda"
+        else:
+            self.device = "cpu"
+            
         self.is_running = True
         self.show_terminal_progress = show_terminal_progress
         self.terminal_progress_bar = None
@@ -343,6 +393,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Whisper Transcriber")
         self.setMinimumSize(800, 600)
         
+        # Load user settings
+        self.settings = load_settings()
+        
         # Main widget and layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -381,6 +434,30 @@ class MainWindow(QMainWindow):
         self.format_description.setStyleSheet("font-style: italic; color: #666;")
         settings_layout.addWidget(self.format_description)
         
+        # GPU Acceleration option
+        self.use_gpu_checkbox = QCheckBox("Use GPU acceleration (CUDA)")
+        
+        # Set initial checkbox state from saved settings
+        try:
+            use_gpu = self.settings.get('use_gpu', 'True').lower() == 'true'
+        except:
+            use_gpu = torch.cuda.is_available()
+            
+        self.use_gpu_checkbox.setChecked(use_gpu)
+        
+        # Disable checkbox if GPU is not available
+        if not torch.cuda.is_available():
+            self.use_gpu_checkbox.setEnabled(False)
+            self.use_gpu_checkbox.setToolTip("GPU acceleration is not available on this system")
+        else:
+            gpu_name = torch.cuda.get_device_name(0)
+            self.use_gpu_checkbox.setToolTip(f"Use GPU acceleration with {gpu_name}")
+        
+        # Connect checkbox state change to save settings
+        self.use_gpu_checkbox.stateChanged.connect(self.save_gpu_setting)
+        
+        settings_layout.addWidget(self.use_gpu_checkbox)
+        
         # Connect format combo change to update description
         self.format_combo.currentTextChanged.connect(self.update_format_description)
         
@@ -392,9 +469,14 @@ class MainWindow(QMainWindow):
         self.setStatusBar(status_bar)
         
         # Show GPU status in status bar
-        device_info = "Using GPU 🚀" if torch.cuda.is_available() else "Using CPU"
         if torch.cuda.is_available():
-            device_info += f" ({torch.cuda.get_device_name(0)})"
+            device_info = f"GPU available: {torch.cuda.get_device_name(0)}"
+            if use_gpu:
+                device_info += " (enabled 🚀)"
+            else:
+                device_info += " (disabled ⚠️)"
+        else:
+            device_info = "GPU not available, using CPU"
         status_bar.showMessage(device_info)
         
         # Progress tracking
@@ -428,6 +510,24 @@ class MainWindow(QMainWindow):
         
         self.save_btn.setEnabled(False)
     
+    def save_gpu_setting(self):
+        """Save the GPU acceleration setting when changed"""
+        use_gpu = self.use_gpu_checkbox.isChecked()
+        self.settings['use_gpu'] = str(use_gpu)
+        save_settings(self.settings)
+        
+        # Update status bar (fix: use the class variable instead of method)
+        if torch.cuda.is_available():
+            device_info = f"GPU available: {torch.cuda.get_device_name(0)}"
+            if use_gpu:
+                device_info += " (enabled 🚀)"
+            else:
+                device_info += " (disabled ⚠️)"
+        else:
+            device_info = "GPU not available, using CPU"
+        status_bar = self.statusBar()
+        if status_bar is not None:
+            status_bar.showMessage(device_info)    
     def update_format_description(self, format_name):
         """Update the description when the format selection changes"""
         if format_name in TRANSCRIPTION_FORMATS:
@@ -452,6 +552,7 @@ class MainWindow(QMainWindow):
         self.add_file_btn.setEnabled(False)
         self.model_combo.setEnabled(False)
         self.format_combo.setEnabled(False)
+        self.use_gpu_checkbox.setEnabled(False)
         
         first_item = self.file_list.item(0)
         if (first_item is None):
@@ -461,14 +562,15 @@ class MainWindow(QMainWindow):
         
         current_file = first_item.text()
         model_name = self.model_combo.currentText()
+        use_gpu = self.use_gpu_checkbox.isChecked()
         
         # Get selected format options
         format_name = self.format_combo.currentText()
         format_options = TRANSCRIPTION_FORMATS[format_name]["options"]
         output_format = TRANSCRIPTION_FORMATS[format_name]["output_format"]
         
-        # Create worker with format options
-        self.worker = TranscriptionWorker(model_name, current_file)
+        # Create worker with format options and GPU preference
+        self.worker = TranscriptionWorker(model_name, current_file, use_gpu=use_gpu)
         self.worker.progress.connect(self.update_progress)
         self.worker.status_update.connect(self.update_status)
         self.worker.finished.connect(self.transcription_finished)
@@ -477,6 +579,10 @@ class MainWindow(QMainWindow):
         # Store format options to use in the worker
         self.worker.format_options = format_options
         self.worker.output_format = output_format
+        
+        # Show device being used in status
+        device_msg = f"Using {'GPU' if use_gpu and torch.cuda.is_available() else 'CPU'} for processing"
+        self.status_label.setText(device_msg)
         
         self.worker.start()
         
@@ -548,6 +654,10 @@ class MainWindow(QMainWindow):
         self.add_file_btn.setEnabled(True)
         self.model_combo.setEnabled(True)
         self.format_combo.setEnabled(True)
+        
+        # Only enable GPU checkbox if GPU is available
+        if torch.cuda.is_available():
+            self.use_gpu_checkbox.setEnabled(True)
     
     def save_transcription(self):
         file_name, _ = QFileDialog.getSaveFileName(
