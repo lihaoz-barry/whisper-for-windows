@@ -5,7 +5,7 @@
             "name": "Run Without Debugging",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
+            "program": "${workspaceFolder}/src/run.py",
             "console": "externalTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
