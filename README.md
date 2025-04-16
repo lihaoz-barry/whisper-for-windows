@@ -12,6 +12,26 @@ A Windows desktop application for transcribing audio files using OpenAI's Whispe
 
 See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details on the latest changes and features.
 
+## Prerequisites
+
+Before installing Whisper Transcriber, please ensure you have the following installed:
+
+1. **Python 3.8 to 3.12** - [Download from Python.org](https://www.python.org/downloads/)
+   - During installation, make sure to check "Add Python to PATH"
+   - Python 3.12 is recommended for optimal performance
+   - Python 3.7 and earlier are not supported
+   - Python 3.13+ has not been tested and may not be compatible
+
+2. **Microsoft Visual C++ Redistributable 2015-2022 (x64)** - [Download from Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+   - This is required for PyQt6 and other dependencies to work properly
+   - Without this, you may see "Microsoft Visual C++ 14.0 or greater is required" errors
+
+3. **NVIDIA CUDA Toolkit** (Optional, for GPU acceleration only)
+   - Only needed if you want to use GPU acceleration
+   - The app will guide you through installation if you choose to use GPU features
+
+The installer will check for these prerequisites and guide you through installing any that are missing.
+
 ## Features
 - Transcribe audio files (mp3, wav, m4a, flac, ogg) to text
 - Multiple Whisper model options (tiny, base, small, medium, large)
@@ -27,11 +47,13 @@ See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details on the latest changes and f
 1. Go to the [Releases](https://github.com/yourusername/whisper-for-windows/releases) page
 2. Download the latest `WhisperTranscriber_Setup.exe`
 3. Run the installer and follow the prompts
+4. The installer will check for prerequisites and help you install any that are missing
 
 ### Option 2: Download the portable executable
 1. Go to the [Releases](https://github.com/yourusername/whisper-for-windows/releases) page
 2. Download the latest `Whisper Transcriber.exe`
 3. Run the executable directly (no installation required)
+4. Note: You'll still need to manually install the prerequisites listed above
 
 ## GPU Acceleration
 

@@ -1,7 +1,8 @@
+--only-binary=:all: PyQt6 PyQt6-Qt6 PyQt6-sip
+PyQt6
+PyQt6-Qt6
+PyQt6-sip
 openai-whisper==20231117
-PyQt6==6.6.1
-PyQt6-Qt6==6.6.1
-PyQt6-sip==13.6.0
 --extra-index-url https://download.pytorch.org/whl/cu118
 torch==2.6.0+cu118
 numpy>=1.24.0
