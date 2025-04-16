@@ -187,7 +187,12 @@ class TranscriptionWorker(QThread):
     def __init__(self, model_name, audio_file, use_gpu=None, show_terminal_progress=True):
         super().__init__()
         self.model_name = model_name
-        self.audio_file = audio_file
+        # Normalize the file path to handle Windows paths properly and ensure it's an absolute path
+        self.audio_file = os.path.abspath(os.path.normpath(audio_file))
+        
+        # Print debug info about the file
+        print(f"Audio file path: {self.audio_file}")
+        print(f"File exists: {os.path.exists(self.audio_file)}")
         
         # Determine device to use based on user preference and availability
         self.use_gpu = use_gpu if use_gpu is not None else torch.cuda.is_available()
@@ -204,7 +209,7 @@ class TranscriptionWorker(QThread):
         self.terminal_progress_bar = None
         self.format_options = {}  # Initialize format options with default empty dict
         self.output_format = "text"  # Default output format
-        
+
     def check_model_exists(self):
         """Check if the model already exists in the cache directory"""
         # Get the cache directory path for whisper models
@@ -321,12 +326,89 @@ class TranscriptionWorker(QThread):
             monitor_thread.daemon = True  # This ensures the thread exits when the main thread exits
             monitor_thread.start()
             
-            # Run the actual transcription
-            result = model.transcribe(
-                self.audio_file,
-                fp16=(self.device == "cuda"),
-                **self.format_options  # Pass the format options to the transcribe method
-            )
+            # Double check that file exists before transcribing
+            if not os.path.exists(self.audio_file):
+                raise FileNotFoundError(f"File not found: {self.audio_file}")
+            
+            # Wrap the file loading with a custom loader to handle paths more reliably
+            try:
+                # Try to preload the audio before passing to whisper
+                import numpy as np
+                import subprocess
+                
+                # Log what we're about to do
+                print(f"Using audio file path: {self.audio_file}")
+
+                # Create a custom audio data loader to bypass the potential path issues
+                def custom_audio_loader():
+                    """Custom function to load audio data from file and return as numpy array"""
+                    try:
+                        # Check if FFmpeg is available
+                        from shutil import which
+                        ffmpeg_path = which("ffmpeg")
+                        if not ffmpeg_path:
+                            print("Warning: FFmpeg not found in PATH, will rely on Whisper's internal audio loading")
+                            return None  # Let whisper handle it
+                            
+                        # Ensure absolute file path with proper slashes for Windows
+                        file_path = os.path.abspath(self.audio_file).replace('\\', '/')
+                        
+                        # Set up the FFmpeg command for proper audio conversion
+                        # Similar to what whisper.audio.load_audio does
+                        cmd = [
+                            "ffmpeg",
+                            "-nostdin",
+                            "-threads", "0",
+                            "-i", file_path,
+                            "-f", "s16le",
+                            "-ac", "1",
+                            "-acodec", "pcm_s16le",
+                            "-ar", "16000",
+                            "-"
+                        ]
+                        
+                        # Run FFmpeg and get the audio data
+                        print(f"Running FFmpeg command to load audio data")
+                        process = subprocess.run(cmd, capture_output=True, check=True)
+                        audio_data = np.frombuffer(process.stdout, np.int16).flatten().astype(np.float32) / 32768.0
+                        print(f"Successfully loaded audio data: {len(audio_data)} samples")
+                        return audio_data
+                    except Exception as e:
+                        print(f"Error in custom audio loader: {e}")
+                        return None  # Let whisper handle it
+                
+                # Try to pre-load the audio
+                audio_data = custom_audio_loader()
+                
+                # Run the actual transcription
+                if audio_data is not None:
+                    # If we successfully loaded the audio, use it directly
+                    print("Using pre-loaded audio data for transcription")
+                    result = model.transcribe(
+                        audio_data,  # Pass the pre-loaded audio numpy array
+                        fp16=(self.device == "cuda"),
+                        **self.format_options  # Pass the format options to the transcribe method
+                    )
+                else:
+                    # Fall back to the standard approach if our custom loader failed
+                    print("Falling back to Whisper's audio loading")
+                    # Use pathlib for safer path handling
+                    audio_path = pathlib.Path(self.audio_file).resolve()
+                    print(f"Resolved path: {audio_path}")
+                    
+                    result = model.transcribe(
+                        str(audio_path),  # Ensure it's a string
+                        fp16=(self.device == "cuda"),
+                        **self.format_options  # Pass the format options to the transcribe method
+                    )
+            
+            except Exception as e:
+                print(f"ERROR: Transcription failed: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                self.is_running = False
+                self.error.emit(f"Transcription failed: {str(e)}")
+                return
             
             # Stop the progress monitor
             self.is_running = False
@@ -386,6 +468,9 @@ class TranscriptionWorker(QThread):
             # Display error in terminal too
             if self.show_terminal_progress:
                 print(f"\nERROR: Transcription failed: {error_msg}")
+                # Print traceback for debugging in terminal
+                import traceback
+                print(traceback.format_exc())
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -561,6 +646,17 @@ class MainWindow(QMainWindow):
             return
         
         current_file = first_item.text()
+        
+        # Ensure we're using an absolute path and it exists
+        current_file = os.path.abspath(current_file)
+        if not os.path.exists(current_file):
+            QMessageBox.warning(self, "File Not Found", f"The file '{current_file}' does not exist or cannot be accessed.")
+            self.enable_controls()
+            return
+            
+        # Debug: Print the file path to help with troubleshooting
+        print(f"Attempting to transcribe file: {current_file}")
+        
         model_name = self.model_combo.currentText()
         use_gpu = self.use_gpu_checkbox.isChecked()
         
