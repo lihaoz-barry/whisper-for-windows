@@ -50,6 +50,23 @@
                 "isDefault": true
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Prepare Installer Files",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/build_exe.py"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
         }
     ]
 }

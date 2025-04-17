@@ -138,6 +138,110 @@ def format_word_timestamps(result):
     
     return formatted_text
 
+def get_cuda_details():
+    """Get detailed CUDA capabilities information if available"""
+    cuda_info = {
+        'available': False,
+        'version': None,
+        'device_count': 0,
+        'device_name': None,
+        'compute_capability': None,
+        'memory_gb': None
+    }
+    
+    # Try to get CUDA info from PyTorch first
+    try:
+        cuda_info['available'] = torch.cuda.is_available()
+        
+        if cuda_info['available']:
+            cuda_info['device_count'] = torch.cuda.device_count()
+            
+            if cuda_info['device_count'] > 0:
+                cuda_info['device_name'] = torch.cuda.get_device_name(0)
+                
+                # Get compute capability and other detailed info
+                try:
+                    props = torch.cuda.get_device_properties(0)
+                    cuda_info['compute_capability'] = f"{props.major}.{props.minor}"
+                    cuda_info['memory_gb'] = round(props.total_memory / (1024**3), 1)
+                except Exception as e:
+                    print(f"Could not get detailed GPU properties from PyTorch: {e}")
+    except Exception as e:
+        print(f"Error getting CUDA information from PyTorch: {e}")
+    
+    # Try to get CUDA version using a simpler approach with nvidia-smi
+    try:
+        import subprocess
+        import re
+        import os
+        import shutil
+        
+        # Check if nvidia-smi is available using shutil.which
+        nvidia_smi_path = shutil.which("nvidia-smi")
+        if nvidia_smi_path:
+            print(f"Found nvidia-smi at: {nvidia_smi_path}")
+            
+            # First try a simple call with no arguments to verify it works
+            try:
+                result = subprocess.run([nvidia_smi_path], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    print("Basic nvidia-smi call succeeded")
+                    
+                    # Extract CUDA version from the direct output (which contains a header with the version)
+                    version_match = re.search(r"CUDA Version: (\d+\.\d+)", result.stdout)
+                    if version_match:
+                        cuda_info['version'] = version_match.group(1)
+                        print(f"Extracted CUDA version from nvidia-smi output: {cuda_info['version']}")
+                    else:
+                        # Fallback to the query approach if version not found in basic output
+                        try:
+                            # Try with explicit arguments
+                            query_result = subprocess.run(
+                                [nvidia_smi_path, "--query-gpu=cuda_version", "--format=csv,noheader"],
+                                capture_output=True, text=True, timeout=5
+                            )
+                            if query_result.returncode == 0 and query_result.stdout.strip():
+                                cuda_info['version'] = query_result.stdout.strip()
+                                print(f"Got CUDA version via query: {cuda_info['version']}")
+                        except Exception as e:
+                            print(f"Query attempt failed: {e}")
+                else:
+                    print(f"Basic nvidia-smi call failed with error: {result.stderr}")
+            except subprocess.TimeoutExpired:
+                print("nvidia-smi command timed out")
+            except Exception as e:
+                print(f"Error running basic nvidia-smi: {e}")
+        else:
+            print("nvidia-smi not found in PATH")
+            
+            # Try looking for it manually in common locations
+            possible_paths = [
+                os.path.join(os.environ.get('ProgramFiles', 'C:\\Program Files'), 'NVIDIA Corporation\\NVSMI\\nvidia-smi.exe'),
+                os.path.join(os.environ.get('ProgramW6432', 'C:\\Program Files'), 'NVIDIA Corporation\\NVSMI\\nvidia-smi.exe')
+            ]
+            
+            for possible_path in possible_paths:
+                if os.path.exists(possible_path):
+                    print(f"Found nvidia-smi at: {possible_path}")
+                    try:
+                        result = subprocess.run([possible_path], capture_output=True, text=True, timeout=5)
+                        if result.returncode == 0:
+                            print("nvidia-smi call succeeded")
+                            
+                            # Extract CUDA version from output
+                            version_match = re.search(r"CUDA Version: (\d+\.\d+)", result.stdout)
+                            if version_match:
+                                cuda_info['version'] = version_match.group(1)
+                                print(f"Extracted CUDA version from nvidia-smi output: {cuda_info['version']}")
+                                break
+                    except Exception as e:
+                        print(f"Error running nvidia-smi from {possible_path}: {e}")
+    except Exception as e:
+        print(f"Error in nvidia-smi detection: {e}")
+        
+    print(f"CUDA detection summary: Available={cuda_info['available']}, Version={cuda_info['version']}, Device={cuda_info['device_name']}")
+    return cuda_info
+
 # Terminal progress bar helper class
 class TerminalProgressBar:
     def __init__(self, title="Progress", total=100, width=50, show_percent=True, show_time=True):
@@ -480,6 +584,9 @@ class MainWindow(QMainWindow):
         
         # Load user settings
         self.settings = load_settings()
+        
+        # Get CUDA details
+        self.cuda_info = get_cuda_details()
         
         # Main widget and layout
         main_widget = QWidget()
