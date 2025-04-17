@@ -57,6 +57,9 @@ def prepare_for_inno_setup():
     # Copy LICENSE file
     shutil.copy("LICENSE", staging_dir / "LICENSE")
     
+    # Copy the CUDA detector script to the staging directory
+    shutil.copy("cuda_detector.py", staging_dir / "cuda_detector.py")
+    
     # Create a base requirements.txt in the staging directory without openai-whisper and torch
     with open(staging_dir / "requirements_base.txt", "w") as f:
         f.write("--only-binary=:all: PyQt6 PyQt6-Qt6 PyQt6-sip\n")  # Force binary installs to avoid compilation
@@ -144,6 +147,8 @@ def prepare_for_inno_setup():
     # Create a batch file to run the application
     with open(staging_dir / "Run Whisper Transcriber.bat", "w", encoding="utf-8") as f:
         f.write('@echo off\n')
+        # Enable delayed expansion for variables
+        f.write('setlocal enabledelayedexpansion\n')
         f.write('echo Starting Whisper Transcriber...\n')
         f.write('cd "%~dp0"\n')  # Change to the directory of the batch file
         
@@ -179,6 +184,37 @@ def prepare_for_inno_setup():
         f.write('    echo Upgrading pip to latest version...\n')
         f.write('    venv\\Scripts\\python -m pip install --upgrade pip\n')
         
+        # CUDA detection - fixed to properly handle variable expansion
+        f.write('    echo ================================================\n')
+        f.write('    echo CUDA Detection\n')
+        f.write('    echo ================================================\n')
+        f.write('    echo Checking for CUDA-capable GPU...\n')
+        
+        # Generate the output to a file and set variable with set /p
+        f.write('    venv\\Scripts\\python cuda_detector.py > cuda_version.txt\n')
+        f.write('    set /p CUDA_VERSION=<cuda_version.txt\n')
+        f.write('    echo Raw output from cuda_detector.py:\n')
+        f.write('    type cuda_version.txt\n')
+        f.write('    del cuda_version.txt\n')
+        
+        # Display the variable value with delayed expansion
+        f.write('    echo After set /p command, CUDA_VERSION=!CUDA_VERSION!\n')
+        
+        # Use delayed expansion for the comparisons
+        f.write('    if "!CUDA_VERSION!"=="COMMAND_FAILED" (\n')
+        f.write('        echo nvidia-smi command failed, using CPU-only PyTorch\n')
+        f.write('        set CUDA_VERSION=NONE\n')
+        f.write('    ) else if "!CUDA_VERSION!"=="NOT_FOUND" (\n')
+        f.write('        echo CUDA version not found in nvidia-smi output, using CPU-only PyTorch\n')
+        f.write('        set CUDA_VERSION=NONE\n')
+        f.write('    ) else (\n')
+        f.write('        echo CUDA version detected: !CUDA_VERSION!\n')
+        f.write('    )\n')
+        
+        # Display the detected CUDA version explicitly
+        f.write('    echo Detected CUDA Version: !CUDA_VERSION!\n')
+        f.write('    echo ================================================\n\n')
+        
         # Install base requirements first
         f.write('    echo Installing base dependencies...\n')
         f.write('    venv\\Scripts\\pip install -r requirements_base.txt\n')
@@ -190,26 +226,17 @@ def prepare_for_inno_setup():
         f.write('        echo Attempting alternative installation method for openai-whisper...\n')
         f.write('        venv\\Scripts\\pip install --only-binary=:all: openai-whisper\n')
         f.write('    )\n')
-        
-        # CUDA detection and appropriate PyTorch installation
-        f.write('    echo Checking for CUDA installation...\n')
-        f.write('    venv\\Scripts\\python -c "import subprocess; import re; import sys; result = subprocess.run([\'nvcc\', \'--version\'], capture_output=True, text=True, shell=True); cuda_ver = re.search(r\'release (\\d+\\.\\d+)\', result.stdout); print(cuda_ver.group(1) if cuda_ver else \'NONE\'); sys.exit(0 if cuda_ver else 1)" > cuda_version.txt 2>nul\n')
-        f.write('    set /p CUDA_VERSION=<cuda_version.txt\n')
-        # f.write('    del cuda_version.txt\n')
-                
-        # Display the detected CUDA version explicitly
-        f.write('    echo Detected CUDA Version: %CUDA_VERSION%\n')
 
         # Install PyTorch based on detected CUDA version
-        f.write('    if "%CUDA_VERSION%"=="11.8" (\n')
-        f.write('        echo CUDA 11.8 detected, installing compatible PyTorch...\n')
-        f.write('        venv\\Scripts\\pip install -r requirements_cuda118.txt\n')
-        f.write('    ) else if "%CUDA_VERSION%"=="12.1" (\n')
-        f.write('        echo CUDA 12.4 detected, installing compatible PyTorch...\n')
-        f.write('        venv\\Scripts\\pip install -r requirements_cuda124.txt\n')
-        f.write('    ) else if "%CUDA_VERSION%"=="12.2" (\n')
+        f.write('    if "!CUDA_VERSION!"=="12.6" (\n')
         f.write('        echo CUDA 12.6 detected, installing compatible PyTorch...\n')
         f.write('        venv\\Scripts\\pip install -r requirements_cuda126.txt\n')
+        f.write('    ) else if "!CUDA_VERSION!"=="12.4" (\n')
+        f.write('        echo CUDA 12.4 detected, installing compatible PyTorch...\n')
+        f.write('        venv\\Scripts\\pip install -r requirements_cuda124.txt\n')
+        f.write('    ) else if "!CUDA_VERSION!"=="11.8" (\n')
+        f.write('        echo CUDA 11.8 detected, installing compatible PyTorch...\n')
+        f.write('        venv\\Scripts\\pip install -r requirements_cuda118.txt\n')
         f.write('    ) else (\n')
         f.write('        echo No compatible CUDA version detected, installing CPU-only PyTorch...\n')
         f.write('        venv\\Scripts\\pip install -r requirements_cpu.txt\n')
@@ -219,7 +246,7 @@ def prepare_for_inno_setup():
         
         # Verify the installation was successful and show installed versions
         f.write('echo Verifying installation...\n')
-        f.write('venv\\Scripts\\python -c "import PyQt6; import whisper; print(\'\\nInstallation successful!\'); print(\'\\nInstalled package versions:\'); print(f\'PyQt6: {PyQt6.__version__}\'); print(f\'Whisper: {whisper.__version__}\')" || echo ERROR: Dependencies check failed\n')
+        f.write('venv\\Scripts\\python -c "import PyQt6.QtCore; import whisper; print(\'\\nInstallation successful!\'); print(\'\\nInstalled package versions:\'); print(f\'PyQt6: {PyQt6.QtCore.PYQT_VERSION_STR}\'); print(f\'Whisper: {whisper.__version__}\')" || echo ERROR: Dependencies check failed\n')
         
         # Run the application
         f.write('echo Starting Whisper Transcriber application...\n')
