@@ -2,8 +2,7 @@
 
 A Windows desktop application for transcribing audio files using OpenAI's Whisper model.
 
-##Download Windows
-#Download Windows Installer(https://drive.google.com/file/d/1vxViui9Etk2-sg8HE3fSl45yUIvYIavE/view?usp=sharing)
+## [Download Windows installer](https://drive.google.com/file/d/1vxViui9Etk2-sg8HE3fSl45yUIvYIavE/view?usp=sharing)
 
 ## Demo
 
