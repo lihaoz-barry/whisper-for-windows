@@ -4,7 +4,7 @@ A Windows desktop application for transcribing audio files using OpenAI's Whispe
 
 ## Demo
 
-[![Whisper Transcriber Demo](https://img.youtube.com/)](https://youtu.be/m1tojh6djIQ)
+[![Whisper Transcriber Demo]](https://youtu.be/e_6lQ-FR7Wk)
 
 *Click the image above to watch the demo video*
 
