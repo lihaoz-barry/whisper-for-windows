@@ -119,3 +119,22 @@ __pycache__/
 
 # Exclude everything else in .vscode  
 .vscode/*
+# Generated directories
+__pycache__/
+*.py[cod]
+*$py.class
+python_embedded/
+dist/
+build/
+release/
+site-packages/
+
+# Embedded Python runtime
+python_embedded/
+python/
+
+# Log files
+*.log
+
+# Generated ISS files
+installer_*.iss
