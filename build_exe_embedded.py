@@ -55,6 +55,16 @@ def prepare_for_inno_setup(arch):
     # Copy the CUDA detector script to the staging directory
     shutil.copy("cuda_detector.py", staging_dir / "cuda_detector.py")
     
+    # Copy FFmpeg executable if it exists
+    ffmpeg_src = Path("ffmpeg_bin/ffmpeg.exe")
+    if ffmpeg_src.exists():
+        ffmpeg_dest_dir = staging_dir / "bin"
+        ffmpeg_dest_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ffmpeg_src, ffmpeg_dest_dir / "ffmpeg.exe")
+        print(f"Copied ffmpeg.exe to {ffmpeg_dest_dir}")
+    else:
+        print(f"WARNING: ffmpeg.exe not found at {ffmpeg_src}. Audio loading might fail for some formats.")
+
     # Copy the embedded Python distribution for this architecture
     python_embedded_src = Path("python_embedded") / arch
     python_embedded_dest = staging_dir / "python"
@@ -111,8 +121,18 @@ def prepare_for_inno_setup(arch):
         f.write('    pause\n')
         f.write('    exit /b 1\n')
         f.write(')\n')
-        
         f.write('echo Pip installed successfully.\n')
+        
+        # Install setuptools and wheel
+        f.write('echo Installing setuptools and wheel...\n')
+        f.write('Scripts\\pip.exe install --upgrade setuptools wheel\n')
+        f.write('if %ERRORLEVEL% NEQ 0 (\n')
+        f.write('    echo Failed to install setuptools/wheel. Please check the error message above.\n')
+        f.write('    pause\n')
+        f.write('    exit /b 1\n')
+        f.write(')\n')
+        f.write('echo Setuptools and wheel installed successfully.\n')
+        
         f.write('cd "%~dp0"\n')  # Go back to app directory
         f.write('echo Setup complete!\n')
         f.write('pause\n')
@@ -123,6 +143,10 @@ def prepare_for_inno_setup(arch):
         f.write('setlocal enabledelayedexpansion\n')
         f.write('echo Starting Whisper Transcriber...\n')
         f.write('cd "%~dp0"\n')
+        f.write('\n')
+        f.write(':: Always add the bin directory to PATH (contains ffmpeg if bundled)\n')
+        f.write('set PATH=%~dp0bin;%PATH%\n')
+        f.write('\n')
         f.write('if not exist "python\\python.exe" (\n')
         f.write('    echo ERROR: Embedded Python not found!\n')
         f.write('    echo Please reinstall the application.\n')
