@@ -206,7 +206,7 @@ def prepare_for_inno_setup(arch):
         f.write('    echo ERROR: Could not parse CUDA version !CUDA_VERSION!. Using CPU PyTorch.\n')
         f.write('    set TORCH_REQ_FILE=requirements_cpu.txt\n')
         f.write(') else if !CUDA_MAJOR! GEQ 13 (\n')
-        f.write('    echo CUDA version !CUDA_VERSION! >= 13.0. Using latest supported PyTorch (cu126).\n')
+        f.write('    echo CUDA version !CUDA_VERSION! >= 13.0. Using latest supported PyTorch cu126S.\n')
         f.write('    set TORCH_REQ_FILE=requirements_cuda126.txt\n')
         f.write(') else if !CUDA_MAJOR! EQU 12 (\n')
         f.write('    if !CUDA_MINOR! GEQ 6 (\n')
