@@ -330,7 +330,9 @@ def generate_iss_script(arch):
     """
     Generate a modified Inno Setup script for the given architecture.
     """
-    output_filename = f"WhisperTranscriber_Setup_{arch}"
+    # Use the desired application name
+    app_name = "Whisper for Windows"
+    output_filename = f"Whisper_for_Windows_Setup_{arch}"
     arch_display = {
         "amd64": "x64",
         "win32": "x86",
@@ -341,7 +343,7 @@ def generate_iss_script(arch):
     print(f"Generating Inno Setup script for {arch} architecture: {iss_file}")
     
     with open(iss_file, "w") as f:
-        f.write(f'''#define MyAppName "Whisper Transcriber"
+        f.write(f'''#define MyAppName "{app_name}"
 #define MyAppVersion "1.0.1"
 #define MyAppPublisher "Whisper for Windows Team"
 #define MyAppURL "https://github.com/yourusername/whisper-for-windows"
@@ -349,7 +351,7 @@ def generate_iss_script(arch):
 #define MyAppArchitecture "{arch_display}"
 
 [Setup]
-AppId={{738D9A98-D71E-4748-AD2D-D7125D97835B}}
+AppId={{738D9A98-D71E-4748-AD2D-D7125D97835B}} ; Keep this unique ID
 AppName={{#MyAppName}} ({arch_display})
 AppVersion={{#MyAppVersion}}
 AppPublisher={{#MyAppPublisher}}
@@ -364,8 +366,7 @@ OutputBaseFilename={output_filename}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-; Comment out the icon if you don't have one yet
-; SetupIconFile=resources\\app_icon.ico
+SetupIconFile=resources\\app_icon.ico
 PrivilegesRequired=lowest
 ''')
 
@@ -400,10 +401,10 @@ Name: "startmenuicon"; Description: "Create Start Menu shortcut"; GroupDescripti
         # Add icons and run section
         f.write('''
 [Icons]
-Name: "{group}\\{#MyAppName}"; Filename: "{app}\\{#MyAppExeName}"
+Name: "{group}\\{#MyAppName}"; Filename: "{app}\\{#MyAppExeName}"; IconFilename: "{app}\\resources\\app_icon.ico"
 Name: "{group}\\Verify GPU Capabilities"; Filename: "{app}\\verify_gpu.bat"
 Name: "{group}\\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\\{#MyAppName}"; Filename: "{app}\\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\\{#MyAppName}"; Filename: "{app}\\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\\resources\\app_icon.ico"
 
 [Run]
 ; Option to run the application after installation
