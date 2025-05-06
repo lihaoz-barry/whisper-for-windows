@@ -162,7 +162,7 @@ def prepare_for_inno_setup(arch):
         f.write('    md site-packages\n')
         f.write(')\n')
         f.write('echo ================================================\n')
-        f.write('echo CUDA Detection & PyTorch Installation\n')
+        f.write('echo CUDA Detection ^& PyTorch Installation\n')
         f.write('echo ================================================\n')
         f.write('echo Checking for CUDA-capable GPU...\n')
         f.write('python\\python.exe cuda_detector.py > cuda_version.txt\n')
