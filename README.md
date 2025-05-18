@@ -125,6 +125,21 @@ On first use for each model, Whisper will download the model files from the inte
 - Windows: `C:\Users\<username>\.cache\whisper`
 - File sizes range from ~75MB (tiny) to ~3GB (large)
 
+### Dependency Installation and Flag Files (Embedded Version)
+When using the version of the application built with an embedded Python environment (typically via `build_exe_embedded.py`), the `Run Whisper Transcriber.bat` script manages the installation of dependencies. To optimize subsequent launches, it uses flag files:
+
+- **`_base_deps_installed.flag`**: Created after base dependencies (like PyQt6, numpy, librosa) are successfully installed. If this file exists, the script skips reinstalling these base packages.
+- **`_whisper_installed.flag`**: Created after `openai-whisper` is successfully installed. If this file exists, its installation is skipped.
+- **`_pytorch_configured.flag`**: Created after PyTorch (either CPU or a specific CUDA version) is successfully installed and configured. If this file exists, the script skips CUDA detection and the entire PyTorch installation/verification process.
+
+**To force a re-installation of specific dependencies:**
+- **All dependencies (including PyTorch reconfiguration)**: Delete all `_*.flag` files (e.g., `_base_deps_installed.flag`, `_whisper_installed.flag`, `_pytorch_configured.flag`) in the application's root directory (where `Run Whisper Transcriber.bat` is located).
+- **Base dependencies only**: Delete `_base_deps_installed.flag`.
+- **Whisper only**: Delete `_whisper_installed.flag`.
+- **PyTorch only (will trigger CUDA re-detection and PyTorch re-installation)**: Delete `_pytorch_configured.flag`. The script will then redetect your CUDA version (if applicable) and install the appropriate PyTorch version, then recreate the `_pytorch_configured.flag`.
+
+This system ensures that you only download and install packages when necessary, saving time and bandwidth on subsequent application starts.
+
 ## Building a Distributable Version
 
 ### Building Different Versions
