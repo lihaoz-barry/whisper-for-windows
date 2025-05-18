@@ -1,8 +1,9 @@
---only-binary=:all: PyQt6 PyQt6-Qt6 PyQt6-sip
+--only-binary=PyQt6 PyQt6-Qt6 PyQt6-sip
 PyQt6
 PyQt6-Qt6
 PyQt6-sip
-openai-whisper==20231117
+# Replace direct package with GitHub URL to avoid compatibility issues
+git+https://github.com/openai/whisper.git
 --extra-index-url https://download.pytorch.org/whl/cu118
 torch==2.6.0+cu118
 numpy>=1.24.0

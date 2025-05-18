@@ -67,6 +67,79 @@
                 "kind": "build"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Setup Embedded Python",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/setup_embedded_python.py"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Setup Development Environment (Embedded Python)",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/dev_with_embedded.py"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Embedded Installers (All Architectures)",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/build_exe_embedded.py"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Application (Embedded Python)",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev_env/python/python.exe",
+            "args": [
+                "${workspaceFolder}/src/run.py"
+            ],
+            "options": {
+                "env": {
+                    "PYTHONPATH": "${workspaceFolder}/dev_env/site-packages"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
         }
     ]
 }
