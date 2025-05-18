@@ -119,3 +119,12 @@ __pycache__/
 
 # Exclude everything else in .vscode  
 .vscode/*
+
+# Ignore all files in the dev_env directory
+dev_env/*
+
+# Ignore all files in the python_embedded directory
+python_embedded/*
+
+# Ignore Inno Setup script files
+installer_*.iss
