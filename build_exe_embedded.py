@@ -135,7 +135,6 @@ def prepare_for_inno_setup(arch):
         
         f.write('cd "%~dp0"\n')  # Go back to app directory
         f.write('echo Setup complete!\n')
-        f.write('pause\n')
     
     # Create a batch file to run the application
     with open(staging_dir / "Run Whisper Transcriber.bat", "w", encoding="utf-8") as f:
@@ -175,7 +174,7 @@ def prepare_for_inno_setup(arch):
         f.write('echo Checking for base dependencies flag: !BASE_DEPS_FLAG!\n')
         f.write('if not exist "!BASE_DEPS_FLAG!" (\n')
         f.write('    echo Base dependencies flag not found. Installing base dependencies...\n')
-        f.write('"python\\\\python.exe" -m pip install -r requirements_base.txt\n') # Changed from python\\Scripts\\pip.exe
+        f.write('python\\Scripts\\pip.exe install -r requirements_base.txt\n') # Changed from python\\Scripts\\pip.exe
         f.write('    if %ERRORLEVEL% EQU 0 (\n')
         f.write('        echo. > "!BASE_DEPS_FLAG!"\n')
         f.write('        echo Base dependencies installed successfully and flag created.\n')
@@ -263,11 +262,11 @@ def prepare_for_inno_setup(arch):
         f.write('echo Selected PyTorch requirements file: !TORCH_REQ_FILE!\n')
         f.write('\n')
         f.write('echo Uninstalling any existing PyTorch versions to ensure a clean install...\n')
-        f.write('"python\\\\python.exe" -m pip uninstall -y torch torch-cpu torch-directml torch-tensorrt torchcsprng torchaudio torchvision torchdata torchtext triton > nul 2>&1\n') # Changed
+        f.write('python\\Scripts\\pip.exe uninstall -y torch torch-cpu torch-directml torch-tensorrt torchcsprng torchaudio torchvision torchdata torchtext triton > nul 2>&1\n') # Changed
         f.write('echo Existing PyTorch uninstalled (if present).\n')
         f.write('\n')
-        f.write('echo Installing PyTorch from !TORCH_REQ_FILE!...n')
-        f.write('"python\\\\python.exe" -m pip install -r !TORCH_REQ_FILE! --no-cache-dir\n') # Changed
+        f.write('echo Installing PyTorch from !TORCH_REQ_FILE!...\n')
+        f.write('python\\Scripts\\pip.exe install -r !TORCH_REQ_FILE! --no-cache-dir\n') # Changed
         f.write('if %ERRORLEVEL% NEQ 0 (\n')
         f.write('    echo ERROR: Failed to install PyTorch from !TORCH_REQ_FILE!. Check logs above.\n')
         f.write('    pause\n')
@@ -286,10 +285,10 @@ def prepare_for_inno_setup(arch):
         f.write('\n')
         f.write('if not exist "!WHISPER_FLAG!" (\n')
         f.write('    echo Whisper installation flag not found. Installing openai-whisper...\n')
-        f.write('"python\\\\python.exe" -m pip install -r requirements_whisper.txt\n') # Changed
+        f.write('python\\Scripts\\pip.exe install -r requirements_whisper.txt\n') # Changed
         f.write('    if %ERRORLEVEL% NEQ 0 (\n')
         f.write('        echo Attempting alternative installation method for openai-whisper...\n')
-        f.write('"python\\\\python.exe" -m pip install --only-binary=:all: openai-whisper\n') # Changed
+        f.write('python\\Scripts\\pip.exe install --only-binary=:all: openai-whisper\n') # Changed
         f.write('    )\n')
         f.write('    if %ERRORLEVEL% EQU 0 (\n')
         f.write('        echo. > "!WHISPER_FLAG!"\n')
@@ -411,7 +410,7 @@ ArchitecturesInstallIn64BitMode=arm64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
 Name: "startmenuicon"; Description: "Create Start Menu shortcut"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
 
 [Files]
