@@ -1,10 +1,19 @@
-# Whisper Transcriber for Windows
+# Whisper for Windows: Accurate, Local, GPU-Accelerated Audio Transcription
 
-
+**Whisper for Windows** is a user-friendly desktop application that brings the power of OpenAI's Whisper models directly to your Windows PC. It allows you to accurately transcribe audio files locally, ensuring privacy and control over your data. A key feature is its robust **NVIDIA CUDA support**, enabling significantly faster transcriptions by leveraging your GPU's processing power. The application intelligently manages dependencies, including dynamic selection of the most compatible PyTorch CUDA version for your hardware, ensuring a smooth experience even with an embedded Python environment.
 
 <img src="https://github.com/user-attachments/assets/b1fbeaec-ad09-4a6a-9cad-ac644d9e7ff8" width="333">
 
-A Windows desktop application for transcribing audio files using OpenAI's Whisper model.
+## Key Features:
+*   **Local Transcription**: Process audio files on your own machine, no internet connection required after initial model download.
+*   **High Accuracy**: Utilizes OpenAI's state-of-the-art Whisper models (tiny, base, small, medium, large) for precise speech-to-text conversion.
+*   **NVIDIA GPU Acceleration**: Dynamically detects your CUDA version and installs the optimal PyTorch build for significantly faster processing on compatible NVIDIA GPUs.
+*   **CPU Fallback**: Works efficiently on systems without a dedicated NVIDIA GPU by using CPU-based PyTorch.
+*   **Multiple Audio Formats**: Supports common audio files like MP3, WAV, M4A, FLAC, and OGG.
+*   **Versatile Output Formats**: Save transcriptions as plain text, SRT, VTT, Word Timestamps, or JSON.
+*   **User-Friendly Interface**: Simple and intuitive GUI for easy file management and transcription.
+*   **Efficient Dependency Management**: Smart flag system in the embedded version minimizes re-installation of packages, saving time and bandwidth.
+*   **FFmpeg Integration**: Bundled FFmpeg for robust audio file handling.
 
 # Download the recent releases:
 
