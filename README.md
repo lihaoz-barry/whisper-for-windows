@@ -1,12 +1,14 @@
 # Whisper Transcriber for Windows
 
-
-https://github.com/user-attachments/assets/c8e8d39b-4bf8-45fd-a708-a050f8e19258
-
+![whisperForWindows Posters_EN](https://github.com/user-attachments/assets/b1fbeaec-ad09-4a6a-9cad-ac644d9e7ff8)
 
 A Windows desktop application for transcribing audio files using OpenAI's Whisper model.
 
-## [Download Windows installer](https://drive.google.com/file/d/1vxViui9Etk2-sg8HE3fSl45yUIvYIavE/view?usp=sharing)
+#Download the recent releases:
+
+## [Download Windows installer_x64](https://drive.google.com/file/d/1Ee-vesuzrYWkYWEuq1S1sBFmca5_wZBb/view?usp=sharing)
+## [Download Windows installer_x32](https://drive.google.com/file/d/1NkNoxtngnxjCsYrEZ_uLLss8-m9zNuWA/view?usp=sharing)
+## [Download Windows installer_ARM](https://drive.google.com/file/d/1NkNoxtngnxjCsYrEZ_uLLss8-m9zNuWA/view?usp=sharing)
 
 ## Demo
 
